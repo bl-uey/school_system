@@ -1,41 +1,39 @@
-
-
 START TRANSACTION;
--- Database: `school_system`
--- بنية الجدول `attendance`
+
 CREATE TABLE `attendance` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
   `date` date NOT NULL,
-  `status` enum('حاضر','غائب','متأخر','بإذن') NOT NULL
+  `status` enum('حاضر','غائب','متأخر','بإذن') NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- بنية الجدول `classes`
 
 CREATE TABLE `classes` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `teacher_id` int(11) DEFAULT NULL
+  `teacher_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
- -- بنية الجدول `courses`
 CREATE TABLE `courses` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
-  `teacher_id` int(11) DEFAULT NULL
+  `teacher_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
--- بنية الجدول `grades`
+
 CREATE TABLE `grades` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
   `grade` decimal(5,2) DEFAULT NULL,
-  `exam_date` date DEFAULT NULL
+  `exam_date` date DEFAULT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
--- بنية الجدول `students`
+
 CREATE TABLE `students` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `date_of_birth` date DEFAULT NULL,
   `gender` enum('ذكر','أنثى') DEFAULT NULL,
@@ -45,48 +43,62 @@ CREATE TABLE `students` (
   `parent_name` varchar(255) DEFAULT NULL,
   `parent_phone` varchar(20) DEFAULT NULL,
   `enrollment_date` date DEFAULT NULL,
-  `class_id` int(11) DEFAULT NULL
+  `class_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
--- إرجاع أو استيراد بيانات الجدول `students`
 
-
-INSERT INTO `students` (`id`, `name`, `date_of_birth`, `gender`, `address`, `phone`, `email`, `parent_name`, `parent_phone`, `enrollment_date`, `class_id`) VALUES
-(0, 'saja', '08.05.2002', 'أنثى', 'العامودي', '0592451734', 'grayozx88@gmail.com', 'محمد', '0592451734', '2026-00-00', 0);
-
- -- بنية الجدول `teachers`
 CREATE TABLE `teachers` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
   `hire_date` date DEFAULT NULL,
-  `specialization` varchar(255) DEFAULT NULL
+  `specialization` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
--- بنية الجدول `users`
+
 CREATE TABLE `users` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `full_name` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
--- إرجاع أو استيراد بيانات الجدول `users`
-INSERT INTO `users` (`id`, `full_name`, `username`, `password`, ) VALUES
-(1, 'مدير النظام', 'admin', '2002');
 
--- Indexes for table `students`
+ALTER TABLE `attendance`
+  ADD CONSTRAINT `fk_attendance_student`
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`id`)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `grades`
+  ADD CONSTRAINT `fk_grades_student`
+  FOREIGN KEY (`student_id`) REFERENCES `students`(`id`)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `grades`
+  ADD CONSTRAINT `fk_grades_course`
+  FOREIGN KEY (`course_id`) REFERENCES `courses`(`id`)
+  ON DELETE CASCADE ON UPDATE CASCADE;
+
 ALTER TABLE `students`
-  ADD UNIQUE KEY `email` (`email`);
--- Indexes for table `teachers`
+  ADD CONSTRAINT `fk_students_class`
+  FOREIGN KEY (`class_id`) REFERENCES `classes`(`id`)
+  ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE `teachers`
-  ADD UNIQUE KEY `email` (`email`);
--- Indexes for table `users`
+ALTER TABLE `classes`
+  ADD CONSTRAINT `fk_classes_teacher`
+  FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`id`)
+  ON DELETE SET NULL ON UPDATE CASCADE;
 
-ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
+ALTER TABLE `courses`
+  ADD CONSTRAINT `fk_courses_teacher`
+  FOREIGN KEY (`teacher_id`) REFERENCES `teachers`(`id`)
+  ON DELETE SET NULL ON UPDATE CASCADE;
+
 COMMIT;
-
 
