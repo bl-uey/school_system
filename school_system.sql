@@ -1,21 +1,8 @@
 
--- Generation Time: 2026/06/21
 
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
-SET time_zone = "+00:00";
-
-
-
-
-
 -- Database: `school_system`
-
-
 -- بنية الجدول `attendance`
-
-
 CREATE TABLE `attendance` (
   `id` int(11) NOT NULL,
   `student_id` int(11) NOT NULL,
@@ -23,11 +10,7 @@ CREATE TABLE `attendance` (
   `status` enum('حاضر','غائب','متأخر','بإذن') NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
- --------------------------------------------------------
-
-
 -- بنية الجدول `classes`
-
 
 CREATE TABLE `classes` (
   `id` int(11) NOT NULL,
@@ -35,25 +18,14 @@ CREATE TABLE `classes` (
   `teacher_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
- --------------------------------------------------------
-
-
--- بنية الجدول `courses`
-
-
+ -- بنية الجدول `courses`
 CREATE TABLE `courses` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
   `teacher_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--------------------------------------------------------
-
-
 -- بنية الجدول `grades`
-
-
 CREATE TABLE `grades` (
   `id` int(11) NOT NULL,
   `student_id` int(11) NOT NULL,
@@ -61,13 +33,7 @@ CREATE TABLE `grades` (
   `grade` decimal(5,2) DEFAULT NULL,
   `exam_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---------------------------------------------------------
-
-
 -- بنية الجدول `students`
-
-
 CREATE TABLE `students` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -81,20 +47,13 @@ CREATE TABLE `students` (
   `enrollment_date` date DEFAULT NULL,
   `class_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
 -- إرجاع أو استيراد بيانات الجدول `students`
 
 
 INSERT INTO `students` (`id`, `name`, `date_of_birth`, `gender`, `address`, `phone`, `email`, `parent_name`, `parent_phone`, `enrollment_date`, `class_id`) VALUES
-(0, 'hadeel', '2025-08-01', 'أنثى', 'الترنس', '0509565112', 'hadeelmalak8@gmail.com', 'احمد', '05971555', '2025-08-23', 0);
+(0, 'saja', '08.05.2002', 'أنثى', 'العامودي', '0592451734', 'grayozx88@gmail.com', 'محمد', '0592451734', '2026-00-00', 0);
 
- --------------------------------------------------------
-
-
--- بنية الجدول `teachers`
-
-
+ -- بنية الجدول `teachers`
 CREATE TABLE `teachers` (
   `id` int(11) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -104,13 +63,7 @@ CREATE TABLE `teachers` (
   `hire_date` date DEFAULT NULL,
   `specialization` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
- --------------------------------------------------------
-
-
 -- بنية الجدول `users`
-
-
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `full_name` varchar(100) NOT NULL,
@@ -118,31 +71,17 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
 -- إرجاع أو استيراد بيانات الجدول `users`
+INSERT INTO `users` (`id`, `full_name`, `username`, `password`, ) VALUES
+(1, 'مدير النظام', 'admin', '2002');
 
-
-INSERT INTO `users` (`id`, `full_name`, `username`, `password`, `created_at`) VALUES
-(1, 'مدير النظام', 'admin', '12345', '2025-08-21 06:34:29');
-
-
--- Indexes for dumped tables
-
-
---
 -- Indexes for table `students`
---
 ALTER TABLE `students`
   ADD UNIQUE KEY `email` (`email`);
-
-
 -- Indexes for table `teachers`
 
 ALTER TABLE `teachers`
   ADD UNIQUE KEY `email` (`email`);
-
-
 -- Indexes for table `users`
 
 ALTER TABLE `users`
