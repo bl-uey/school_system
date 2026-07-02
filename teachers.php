@@ -2,22 +2,44 @@
 require_once 'config.php';
 requireLogin();
 
-// إضافة معلم
+// منع الدخول بدون تسجيل
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// ADD TEACHER (admin فقط)
 if(isset($_POST['add_teacher'])){
+
+    if($_SESSION['role'] !== 'admin'){
+        die("غير مسموح لك بإضافة معلمين");
+    }
+
     $stmt = $pdo->prepare("INSERT INTO teachers (name, email, phone, specialization) VALUES (?, ?, ?, ?)");
     $stmt->execute([$_POST['name'], $_POST['email'], $_POST['phone'], $_POST['specialization']]);
     header("Location: teachers.php"); exit;
 }
 
-// تعديل معلم
+// EDIT TEACHER (admin فقط)
+
 if(isset($_POST['edit_teacher'])){
+
+    if($_SESSION['role'] !== 'admin'){
+        die("غير مسموح لك بتعديل المعلمين");
+    }
+
     $stmt = $pdo->prepare("UPDATE teachers SET name=?, email=?, phone=?, specialization=? WHERE id=?");
     $stmt->execute([$_POST['name'], $_POST['email'], $_POST['phone'], $_POST['specialization'], $_POST['id']]);
     header("Location: teachers.php"); exit;
 }
 
-// حذف معلم
+// DELETE TEACHER (admin فقط)
 if(isset($_GET['delete'])){
+
+    if($_SESSION['role'] !== 'admin'){
+        die("غير مسموح لك بالحذف");
+    }
+
     $stmt = $pdo->prepare("DELETE FROM teachers WHERE id=?");
     $stmt->execute([$_GET['delete']]);
     header("Location: teachers.php"); exit;
@@ -55,20 +77,34 @@ $teachers = $pdo->query("SELECT * FROM teachers")->fetchAll();
     <a href="courses.php"><i class="fa fa-book-open"></i> المواد</a>
     <a href="classes.php"><i class="fa fa-school"></i> الفصول</a>
     <a href="attendance.php"><i class="fa fa-calendar-check"></i> الحضور</a>
+    <a href="grades.php"><i class="fa fa-clipboard-list"></i> الدرجات</a>
     <hr>
     <a href="logout.php" class="text-danger"><i class="fa fa-sign-out-alt"></i> تسجيل الخروج</a>
 </div>
 
 <div class="content">
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>قائمة المعلمين</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">➕ إضافة معلم</button>
+
+        <?php if($_SESSION['role'] === 'admin'): ?>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            ➕ إضافة معلم
+        </button>
+        <?php endif; ?>
+
     </div>
 
     <div class="card">
         <table class="table table-hover align-middle">
             <thead>
-                <tr><th>الاسم</th><th>البريد</th><th>الهاتف</th><th>التخصص</th><th>الإجراءات</th></tr>
+                <tr>
+                    <th>الاسم</th>
+                    <th>البريد</th>
+                    <th>الهاتف</th>
+                    <th>التخصص</th>
+                    <th>الإجراءات</th>
+                </tr>
             </thead>
             <tbody>
                 <?php foreach($teachers as $teacher): ?>
@@ -78,42 +114,86 @@ $teachers = $pdo->query("SELECT * FROM teachers")->fetchAll();
                     <td><?= htmlspecialchars($teacher['phone']) ?></td>
                     <td><?= htmlspecialchars($teacher['specialization']) ?></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal<?= $teacher['id'] ?>">تعديل</button>
-                        <a href="?delete=<?= $teacher['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('هل أنت متأكد؟')">حذف</a>
+
+                        <?php if($_SESSION['role'] === 'admin'): ?>
+
+                        <button class="btn btn-sm btn-outline-warning"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal<?= $teacher['id'] ?>">
+                            تعديل
+                        </button>
+
+                        <a href="?delete=<?= $teacher['id'] ?>"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('هل أنت متأكد؟')">
+                           حذف
+                        </a>
+
+                        <?php endif; ?>
+
                     </td>
                 </tr>
 
+                <?php if($_SESSION['role'] === 'admin'): ?>
                 <div class="modal fade" id="editModal<?= $teacher['id'] ?>" tabindex="-1">
-                    <div class="modal-dialog"><form method="POST" class="modal-content">
-                        <div class="modal-header"><h5 class="modal-title">تعديل المعلم</h5></div>
-                        <div class="modal-body">
-                            <input type="hidden" name="id" value="<?= $teacher['id'] ?>">
-                            <input type="text" name="name" class="form-control mb-2" value="<?= $teacher['name'] ?>" required placeholder="الاسم">
-                            <input type="email" name="email" class="form-control mb-2" value="<?= $teacher['email'] ?>" required placeholder="البريد">
-                            <input type="text" name="phone" class="form-control mb-2" value="<?= $teacher['phone'] ?>" placeholder="الهاتف">
-                            <input type="text" name="specialization" class="form-control mb-2" value="<?= $teacher['specialization'] ?>" placeholder="التخصص">
-                        </div>
-                        <div class="modal-footer"><button type="submit" name="edit_teacher" class="btn btn-primary">حفظ</button></div>
-                    </form></div>
+                    <div class="modal-dialog">
+                        <form method="POST" class="modal-content">
+                            <div class="modal-header"><h5 class="modal-title">تعديل المعلم</h5></div>
+                            <div class="modal-body">
+
+                                <input type="hidden" name="id" value="<?= $teacher['id'] ?>">
+
+                                <input type="text" name="name" class="form-control mb-2"
+                                       value="<?= $teacher['name'] ?>" required>
+
+                                <input type="email" name="email" class="form-control mb-2"
+                                       value="<?= $teacher['email'] ?>" required>
+
+                                <input type="text" name="phone" class="form-control mb-2"
+                                       value="<?= $teacher['phone'] ?>">
+
+                                <input type="text" name="specialization" class="form-control mb-2"
+                                       value="<?= $teacher['specialization'] ?>">
+
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" name="edit_teacher" class="btn btn-primary">
+                                    حفظ
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
+                <?php endif; ?>
+
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </div>
 
+<?php if($_SESSION['role'] === 'admin'): ?>
 <div class="modal fade" id="addModal" tabindex="-1">
-    <div class="modal-dialog"><form method="POST" class="modal-content">
-        <div class="modal-header"><h5 class="modal-title">إضافة معلم جديد</h5></div>
-        <div class="modal-body">
-            <input type="text" name="name" class="form-control mb-2" placeholder="الاسم" required>
-            <input type="email" name="email" class="form-control mb-2" placeholder="البريد" required>
-            <input type="text" name="phone" class="form-control mb-2" placeholder="الهاتف">
-            <input type="text" name="specialization" class="form-control mb-2" placeholder="التخصص">
-        </div>
-        <div class="modal-footer"><button type="submit" name="add_teacher" class="btn btn-primary">حفظ</button></div>
-    </form></div>
+    <div class="modal-dialog">
+        <form method="POST" class="modal-content">
+            <div class="modal-header"><h5>إضافة معلم جديد</h5></div>
+            <div class="modal-body">
+
+                <input type="text" name="name" class="form-control mb-2" placeholder="الاسم" required>
+                <input type="email" name="email" class="form-control mb-2" placeholder="البريد" required>
+                <input type="text" name="phone" class="form-control mb-2" placeholder="الهاتف">
+                <input type="text" name="specialization" class="form-control mb-2" placeholder="التخصص">
+
+            </div>
+            <div class="modal-footer">
+                <button type="submit" name="add_teacher" class="btn btn-primary">
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
