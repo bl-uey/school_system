@@ -4,7 +4,7 @@ session_start();
 
 // بيانات الاتصال بقاعدة البيانات
 $host = '127.0.0.1';
-$db   = 'school_system'; //  اسم قاعدة البيانات
+$db   = 'school_system'; 
 $user = 'root';
 $pass = '';
 $charset = 'utf8mb4';
