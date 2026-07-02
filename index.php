@@ -2,7 +2,7 @@
 require_once 'config.php';
 requireLogin();
 
-// جلب من قاعدة البيانات
+// جلب الإحصائيات من قاعدة البيانات
 $studentCount = $pdo->query("SELECT COUNT(*) FROM students")->fetchColumn();
 $teacherCount = $pdo->query("SELECT COUNT(*) FROM teachers")->fetchColumn();
 $courseCount = $pdo->query("SELECT COUNT(*) FROM courses")->fetchColumn();
@@ -21,7 +21,7 @@ $classCount = $pdo->query("SELECT COUNT(*) FROM classes")->fetchColumn();
         
         body { font-family: 'Cairo', sans-serif; background-color: #f4f7f6; }
         
-        /* القائمة الجانبية */
+        /* القائمة الجانبية (Sidebar) */
         .sidebar { 
             width: 260px; background: #2c3e50; color: #fff; 
             min-height: 100vh; padding: 20px; position: fixed; 
@@ -36,7 +36,7 @@ $classCount = $pdo->query("SELECT COUNT(*) FROM classes")->fetchColumn();
         /* المحتوى الرئيسي */
         .content { margin-right: 260px; padding: 40px; }
         
-        /* البطاقات */
+        /* البطاقات (Cards) */
         .card { 
             border: none; border-radius: 20px; padding: 25px; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center;
