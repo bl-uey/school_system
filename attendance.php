@@ -2,27 +2,57 @@
 require_once 'config.php';
 requireLogin();
 
-// العمليات (إضافة/تعديل/حذف)
+// منع غير المسجلين
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// ADD ATTENDANCE (admin فقط)
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
     if(isset($_POST['add_attendance'])){
+
+        if($_SESSION['role'] !== 'admin'){
+            die("غير مسموح لك بإضافة سجل حضور");
+        }
+
         $stmt = $pdo->prepare("INSERT INTO attendance (student_id, date, status) VALUES (?, ?, ?)");
         $stmt->execute([$_POST['student_id'], $_POST['date'], $_POST['status']]);
         header("Location: attendance.php?msg=added"); exit;
     }
+
+    // EDIT (admin فقط)
     if(isset($_POST['edit_attendance'])){
+
+        if($_SESSION['role'] !== 'admin'){
+            die("غير مسموح لك بتعديل السجلات");
+        }
+
         $stmt = $pdo->prepare("UPDATE attendance SET student_id=?, date=?, status=? WHERE id=?");
         $stmt->execute([$_POST['student_id'], $_POST['date'], $_POST['status'], $_POST['id']]);
         header("Location: attendance.php?msg=updated"); exit;
     }
 }
 
+// DELETE (admin فقط)
 if(isset($_GET['delete'])){
+
+    if($_SESSION['role'] !== 'admin'){
+        die("غير مسموح لك بالحذف");
+    }
+
     $stmt = $pdo->prepare("DELETE FROM attendance WHERE id=?");
     $stmt->execute([$_GET['delete']]);
     header("Location: attendance.php?msg=deleted"); exit;
 }
 
-$attendance_records = $pdo->query("SELECT a.*, s.name AS student_name FROM attendance a JOIN students s ON a.student_id=s.id ORDER BY a.date DESC")->fetchAll();
+$attendance_records = $pdo->query("
+SELECT a.*, s.name AS student_name 
+FROM attendance a 
+JOIN students s ON a.student_id=s.id 
+ORDER BY a.date DESC
+")->fetchAll();
+
 $students = $pdo->query("SELECT id, name FROM students")->fetchAll();
 ?>
 
@@ -56,14 +86,28 @@ $students = $pdo->query("SELECT id, name FROM students")->fetchAll();
 </div>
 
 <div class="content-area">
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3>سجل الحضور والغياب</h3>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">➕ إضافة سجل جديد</button>
+
+        <?php if($_SESSION['role'] === 'admin'): ?>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            ➕ إضافة سجل جديد
+        </button>
+        <?php endif; ?>
     </div>
 
     <div class="card">
         <table class="table table-hover align-middle">
-            <thead><tr><th>#</th><th>الطالب</th><th>التاريخ</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الطالب</th>
+                    <th>التاريخ</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
             <tbody>
                 <?php foreach($attendance_records as $record): ?>
                 <tr>
@@ -72,61 +116,100 @@ $students = $pdo->query("SELECT id, name FROM students")->fetchAll();
                     <td><?= $record['date'] ?></td>
                     <td><span class="badge badge-<?= $record['status'] ?>"><?= $record['status'] ?></span></td>
                     <td>
-                        <button class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editModal<?= $record['id'] ?>">تعديل</button>
-                        <a href="?delete=<?= $record['id'] ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('تأكيد الحذف؟')">حذف</a>
+
+                        <?php if($_SESSION['role'] === 'admin'): ?>
+
+                        <button class="btn btn-sm btn-outline-warning"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editModal<?= $record['id'] ?>">
+                            تعديل
+                        </button>
+
+                        <a href="?delete=<?= $record['id'] ?>"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('تأكيد الحذف؟')">
+                           حذف
+                        </a>
+
+                        <?php endif; ?>
+
                     </td>
                 </tr>
 
+                <?php if($_SESSION['role'] === 'admin'): ?>
                 <div class="modal fade" id="editModal<?= $record['id'] ?>" tabindex="-1">
                     <div class="modal-dialog">
                         <form method="POST" class="modal-content">
                             <div class="modal-header"><h5>تعديل السجل</h5></div>
                             <div class="modal-body">
+
                                 <input type="hidden" name="id" value="<?= $record['id'] ?>">
+
                                 <select name="student_id" class="form-control mb-2">
                                     <?php foreach($students as $s): ?>
-                                        <option value="<?= $s['id'] ?>" <?= $s['id']==$record['student_id']?'selected':'' ?>><?= $s['name'] ?></option>
+                                        <option value="<?= $s['id'] ?>" <?= $s['id']==$record['student_id']?'selected':'' ?>>
+                                            <?= $s['name'] ?>
+                                        </option>
                                     <?php endforeach; ?>
                                 </select>
+
                                 <input type="date" name="date" class="form-control mb-2" value="<?= $record['date'] ?>" required>
+
                                 <select name="status" class="form-control">
                                     <option value="حاضر" <?= $record['status']=='حاضر'?'selected':'' ?>>حاضر</option>
                                     <option value="غائب" <?= $record['status']=='غائب'?'selected':'' ?>>غائب</option>
                                     <option value="متأخر" <?= $record['status']=='متأخر'?'selected':'' ?>>متأخر</option>
                                 </select>
+
                             </div>
-                            <div class="modal-footer"><button type="submit" name="edit_attendance" class="btn btn-primary">حفظ التغييرات</button></div>
+                            <div class="modal-footer">
+                                <button type="submit" name="edit_attendance" class="btn btn-primary">
+                                    حفظ التغييرات
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>
+                <?php endif; ?>
+
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
 </div>
 
+<?php if($_SESSION['role'] === 'admin'): ?>
 <div class="modal fade" id="addModal" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" class="modal-content">
             <div class="modal-header"><h5>إضافة سجل حضور</h5></div>
             <div class="modal-body">
+
                 <select name="student_id" class="form-control mb-2">
                     <option value="">اختر الطالب</option>
                     <?php foreach($students as $s): ?>
                         <option value="<?= $s['id'] ?>"><?= $s['name'] ?></option>
                     <?php endforeach; ?>
                 </select>
+
                 <input type="date" name="date" class="form-control mb-2" required>
+
                 <select name="status" class="form-control">
                     <option value="حاضر">حاضر</option>
                     <option value="غائب">غائب</option>
                     <option value="متأخر">متأخر</option>
                 </select>
-            </div>س
-            <div class="modal-footer"><button type="submit" name="add_attendance" class="btn btn-primary">حفظ</button></div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="submit" name="add_attendance" class="btn btn-primary">
+                    حفظ
+                </button>
+            </div>
         </form>
     </div>
 </div>
+<?php endif; ?>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
