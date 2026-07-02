@@ -13,11 +13,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user = $stmt->fetch();
 
     // التحقق من اسم المستخدم وكلمة المرور
-    if ($user && $user['password'] === $password) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['user_name'] = $user['full_name'];
-        header("Location: index.php");
-        exit;
+  if ($user && $user['password'] === $password) {
+    $_SESSION['user_id'] = $user['id'];
+    $_SESSION['user_name'] = $user['full_name'];
+    $_SESSION['role'] = $user['role'];   
+    header("Location: index.php");
+    exit;
+
     } else {
         $error = "اسم المستخدم أو كلمة المرور غير صحيحة";
     }
