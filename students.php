@@ -2,8 +2,19 @@
 require_once 'config.php';
 requireLogin();
 
-// إضافة طالب جديد
+// منع الوصول بدون تسجيل دخول
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit;
+}
+
+// إضافة طالب جديد (فقط admin)
 if(isset($_POST['add_student'])){
+
+    if($_SESSION['role'] !== 'admin'){
+        die("غير مسموح لك بإضافة طلاب");
+    }
+
     $stmt = $pdo->prepare("INSERT INTO students (name, email) VALUES (?, ?)");
     $stmt->execute([$_POST['name'], $_POST['email']]);
     header("Location: students.php");
@@ -24,16 +35,13 @@ $students = $pdo->query("SELECT * FROM students")->fetchAll();
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
         body { font-family: 'Cairo', sans-serif; background-color: #f4f7f6; margin: 0; }
         
-        /* القائمة الجانبية (Sidebar) - مطابقة تماماً للرئيسية */
         .sidebar { width: 260px; background: #2c3e50; color: #fff; min-height: 100vh; padding: 20px; position: fixed; right: 0; top: 0; }
         .sidebar h4 { text-align: center; margin-bottom: 30px; font-weight: bold; color: #3498db; }
         .sidebar a { display: block; padding: 15px; color: #ecf0f1; text-decoration: none; border-radius: 12px; margin-bottom: 8px; transition: 0.3s; }
         .sidebar a:hover, .sidebar a.active { background: #3498db; }
         
-        /* المحتوى */
         .content { margin-right: 260px; padding: 40px; }
         
-        /* البطاقة العصرية */
         .card { border: none; border-radius: 20px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .table thead { background: #2c3e50; color: white; }
     </style>
@@ -55,19 +63,35 @@ $students = $pdo->query("SELECT * FROM students")->fetchAll();
 <div class="content">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>قائمة الطلاب</h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">➕ إضافة طالب جديد</button>
+
+        <?php if($_SESSION['role'] === 'admin'): ?>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            ➕ إضافة طالب جديد
+        </button>
+        <?php endif; ?>
     </div>
 
     <div class="card">
         <table class="table table-hover align-middle">
-            <thead><tr><th>#</th><th>اسم الطالب</th><th>البريد الإلكتروني</th><th>العمليات</th></tr></thead>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم الطالب</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>العمليات</th>
+                </tr>
+            </thead>
             <tbody>
                 <?php foreach($students as $student): ?>
                 <tr>
                     <td><?= $student['id'] ?></td>
                     <td><?= htmlspecialchars($student['name']) ?></td>
                     <td><?= htmlspecialchars($student['email']) ?></td>
-                    <td><button class="btn btn-sm btn-outline-warning">تعديل</button></td>
+                    <td>
+                        <?php if($_SESSION['role'] === 'admin'): ?>
+                        <button class="btn btn-sm btn-outline-warning">تعديل</button>
+                        <?php endif; ?>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
@@ -83,7 +107,9 @@ $students = $pdo->query("SELECT * FROM students")->fetchAll();
                 <input type="text" name="name" class="form-control mb-2" placeholder="اسم الطالب" required>
                 <input type="email" name="email" class="form-control" placeholder="البريد الإلكتروني" required>
             </div>
-            <div class="modal-footer"><button type="submit" name="add_student" class="btn btn-primary">حفظ البيانات</button></div>
+            <div class="modal-footer">
+                <button type="submit" name="add_student" class="btn btn-primary">حفظ البيانات</button>
+            </div>
         </form>
     </div>
 </div>
